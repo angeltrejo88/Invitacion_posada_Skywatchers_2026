@@ -130,8 +130,28 @@
     <div class="hoja-sem" id="dSem"></div>
   </div>
   <p class="det-hora" id="dHora"></p>
-  <p class="det-lugar"><span>Lugar</span> <b id="dLugar"></b></p>
-  <a class="map" id="dMaps" target="_blank" rel="noopener" hidden>Cómo llegar</a>
+<div class="mapa">
+  <svg class="mapa-img" viewBox="0 0 320 170" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <rect width="320" height="170" fill="#ecf1dc"/>
+    <path d="M0 128C70 104 130 150 200 124S290 104 320 112V170H0Z" fill="#c9e1ef"/>
+    <rect x="24" y="16" width="78" height="52" rx="8" fill="#cfe6c2"/>
+    <rect x="236" y="14" width="64" height="40" rx="8" fill="#cfe6c2"/>
+    <g stroke="#fff" stroke-width="10" stroke-linecap="round" fill="none">
+      <path d="M0 84H320"/><path d="M118 0V170"/><path d="M236 0C226 60 244 110 240 170"/>
+    </g>
+    <g stroke="#f4d9a0" stroke-width="3" stroke-linecap="round" fill="none"><path d="M0 84H320"/><path d="M118 0V170"/></g>
+  </svg>
+  <span class="pin"></span>
+  <div class="mapa-pie">
+    <small>Dónde será</small>
+    <p id="dLugar"></p>
+    <div class="mapa-acc">
+      <a class="map" id="dMaps" target="_blank" rel="noopener" hidden>Cómo llegar</a>
+      
+    </div>
+  </div>
+</div>
+
   <figure class="polaroid">
     <!-- EDITAR: tu imagen del código de vestimenta -->
     <img src="img/vestimenta.webp" alt="Código de vestimenta" onerror="this.remove()">
@@ -151,6 +171,7 @@
     <button class="ph" type="button"><img src="img/foto6.webp" alt="" loading="lazy" onerror="this.parentNode.remove()"></button>
     <button class="ph" type="button"><img src="img/foto7.webp" alt="" loading="lazy" onerror="this.parentNode.remove()"></button>
      <button class="ph" type="button"><img src="img/foto8.webp" alt="" loading="lazy" onerror="this.parentNode.remove()"></button>
+      <button class="ph" type="button"><img src="img/foto9.webp" alt="" loading="lazy" onerror="this.parentNode.remove()"></button>
   </div>
 </section>
 
@@ -236,7 +257,24 @@
   </ul>
 </section>
 
-<section class="sec" id="cierre">
+
+<section class="cierre" id="cierre">
+  <svg class="arbol" viewBox="0 0 200 240" aria-hidden="true">
+    <g class="lineas" fill="none" stroke="#ffe27a" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round">
+      <path d="M100 34L62 82H84L44 140H72L28 204H172L128 140H156L116 82H138Z" pathLength="1"/>
+      <path d="M92 204V228H108V204" pathLength="1"/>
+    </g>
+    <g fill="#fff">
+      <circle class="tw" cx="62" cy="82" r="2.6"/><circle class="tw" cx="138" cy="82" r="2.6"/>
+      <circle class="tw" cx="44" cy="140" r="2.6"/><circle class="tw" cx="156" cy="140" r="2.6"/>
+      <circle class="tw" cx="28" cy="204" r="2.6"/><circle class="tw" cx="172" cy="204" r="2.6"/>
+      <circle class="tw" cx="100" cy="34" r="2.6"/>
+    </g>
+    <circle class="l r" cx="84" cy="118" r="4.5"/><circle class="l g" cx="118" cy="112" r="4.5"/>
+    <circle class="l y" cx="100" cy="160" r="4.5"/><circle class="l r" cx="66" cy="184" r="4.5"/>
+    <circle class="l g" cx="136" cy="182" r="4.5"/>
+    <polygon class="cima" fill="#ffd84d" points="100,6 103.5,15.2 113.3,15.7 105.7,21.9 108.2,31.3 100,26 91.8,31.3 94.3,21.9 86.7,15.7 96.5,15.2"/>
+  </svg>
   <h2 class="h2">Gracias</h2>
   <p>Gracias por tomarte el tiempo de leer esta invitación. Este año cerramos el año bajo el mismo cielo, y nos encantaría que fuera contigo.</p>
   <p class="cdesp" id="cDesp"></p>
@@ -245,12 +283,13 @@
   <button type="button" class="ask-skip" id="arriba">Volver al inicio</button>
 </section>
 
+
 <footer class="pie">
   <p>Gracias a todo el grupo de Skywatchers, que hace posible este evento.</p>
   <p>Gracias por ser parte de la historia de AT Design Studio. Hace un año, este sueño comenzó dentro de una invitación para este mismo evento.</p>
   <!-- EDITAR: tu pie estándar -->
   <img class="firma-img" src="img/firma.webp" alt="By Angel Trejo · AT Design Studio" style="margin-top: -30px; margin-bottom: -40px; transform: scale(.7); scale: .7;" onerror="this.remove()">
-  <p>© AT Design Studio · <a href="https://facebook.com/AngelTrejo88" target="_blank" rel="noopener">By: Angel Trejo</a></p>
+  <p>© AT Design Studio <br> <a href="https://facebook.com/AngelTrejo88" target="_blank" rel="noopener">By: Angel Trejo</a></p>
   <p>Todos los derechos reservados · Durango, Dgo. · México 🇲🇽</p>
 </footer>
 

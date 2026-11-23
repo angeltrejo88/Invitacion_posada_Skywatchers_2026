@@ -6,9 +6,9 @@ const CONFIG = {
     fecha: '2026-12-12T18:00:00',                 // EDITAR: fecha y hora de inicio
     fechaTexto: 'Sábado 12 de diciembre de 2026',
     horaTexto: 'A partir de las 6:00 PM',
-    lugar: 'Por confirmar'  ,
+    lugar: 'C. Sta. María del Oro 114, Hipódromo, 34270 Durango, Dgo.'  ,
     fechaCorta: '12 de diciembre de 2026 · 6:00 PM',
-mapsUrl: ''                                     // EDITAR: link de Maps (vacío = no se muestra el botón)                      // EDITAR (se usa en la fase 2)
+mapsUrl: 'https://maps.app.goo.gl/i6TdAYd61cC1XegdA'                                     // EDITAR: link de Maps (vacío = no se muestra el botón)                      // EDITAR (se usa en la fase 2)
   },
   audio: 'audio/musica.mp3',                          // EDITAR: audio ambiental (déjalo '' para no usar sonido)
   volumen: 0.35,
@@ -177,6 +177,7 @@ if (preguntar) {
 
 
 // Frases del grupo: tarjetas en carrusel
+// Frases del grupo: tarjetas en carrusel
 (async function frases() {
   const lista = [];
   if (sbOk) {
@@ -186,45 +187,110 @@ if (preguntar) {
       else console.error('Frases:', r.status, await r.text());
     } catch (e) {}
   }
-CONFIG.frasesIniciales.forEach(x => lista.push(x));   // las de ejemplo van al final
+  CONFIG.frasesIniciales.forEach(x => lista.push(x));
 
   if (!lista.length) return;
   const box = $('tarjetas');
+  box.innerHTML = '';
+
   lista.forEach((x, k) => {
-    const c = document.createElement('blockquote'); c.className = 'tarjeta'; c.dataset.c = k % 3;
-    const p = document.createElement('p'); p.textContent = x.t;
-    const a = document.createElement('cite'); a.textContent = x.n ? '— ' + x.n : '';
-    c.append(p, a); box.appendChild(c);
+    const c = document.createElement('blockquote');
+    c.className = 'tarjeta';
+    c.dataset.c = k % 3;
+    const p = document.createElement('p');
+    p.textContent = x.t;
+    const a = document.createElement('cite');
+    a.textContent = x.n ? '— ' + x.n : '';
+    c.append(p, a);
+    box.appendChild(c);
   });
+
   $('voces').hidden = false;
   $('vocesN').textContent = lista.length === 1 ? '1 voz del grupo' : lista.length + ' voces del grupo';
+
   const n = lista.length;
   if (n < 2) return;
 
-  // Carrusel infinito: copia de la última al inicio y de la primera al final
+  // Clones para loop infinito: [última] + [1..n] + [primera]
   box.prepend(box.children[n - 1].cloneNode(true));
   box.append(box.children[1].cloneNode(true));
-  const pos = i => { const el = box.children[i]; return el.offsetLeft - (box.clientWidth - el.offsetWidth) / 2; };
-  const paso = () => box.children[1].offsetLeft - box.children[0].offsetLeft;
-  const actual = () => Math.round((box.scrollLeft - pos(0)) / paso());
-  const ir = (i, suave) => box.scrollTo({ left: pos(i), behavior: suave ? 'smooth' : 'auto' });
 
-  // Colocarse en la primera tarjeta real en cuanto la invitación tenga tamaño
-  const ro = new ResizeObserver(() => { if (box.clientWidth) { ir(1, false); ro.disconnect(); } });
+  const pos = i => {
+    const el = box.children[i];
+    return el.offsetLeft - (box.clientWidth - el.offsetWidth) / 2;
+  };
+
+  const paso = () => {
+    const d1 = pos(1) - pos(0);
+    const d2 = pos(2) - pos(1);
+    return d1 > 0 ? d1 : d2;
+  };
+
+  const actual = () => {
+    const p = paso();
+    if (!p) return 1;
+    return Math.round((box.scrollLeft - pos(0)) / p);
+  };
+
+  const ir = (i, suave = false) => {
+    if (!box.clientWidth) return;
+    box.scrollTo({ left: pos(i), behavior: suave ? 'smooth' : 'auto' });
+  };
+
+  let iniciado = false;
+  const posicionarInicial = () => {
+    if (!box.clientWidth || box.offsetParent === null) return false;
+    ir(1, false);
+    iniciado = true;
+    return true;
+  };
+
+  if (document.fonts && document.fonts.ready) {
+    await document.fonts.ready;
+  }
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      posicionarInicial();
+    });
+  });
+
+  const ro = new ResizeObserver(() => {
+    if (!iniciado) {
+      if (posicionarInicial()) ro.disconnect();
+    } else {
+      const idx = Math.min(Math.max(actual(), 1), n);
+      ir(idx, false);
+    }
+  });
   ro.observe(box);
 
-  let auto = true, t;
-  const parar = () => { auto = false; };
-  box.addEventListener('pointerdown', parar);
-  box.addEventListener('touchstart', parar, { passive: true });
+  let auto = true, timerScroll, timerAuto;
+  const pararAuto = () => {
+    auto = false;
+    clearInterval(timerAuto);
+  };
+
+  box.addEventListener('pointerdown', pararAuto, { passive: true });
+  box.addEventListener('touchstart', pararAuto, { passive: true });
+  box.addEventListener('wheel', pararAuto, { passive: true });
+
   box.addEventListener('scroll', () => {
-    clearTimeout(t);
-    t = setTimeout(() => {
+    if (!iniciado) return;
+    clearTimeout(timerScroll);
+    timerScroll = setTimeout(() => {
       const k = actual();
-      if (k <= 0) ir(n, false); else if (k >= n + 1) ir(1, false);
-    }, 100);
-  });
-  setInterval(() => { if (auto && box.clientWidth) ir(actual() + 1, true); }, 5000);
+      if (k <= 0) ir(n, false);
+      else if (k >= n + 1) ir(1, false);
+    }, 110);
+  }, { passive: true });
+
+  timerAuto = setInterval(() => {
+    if (!auto) return;
+    if (!iniciado && !posicionarInicial()) return;
+    const sig = actual() + 1;
+    ir(sig > n + 1 ? 1 : sig, true);
+  }, 4500);
 })();
 
 // Contador
@@ -249,7 +315,10 @@ function revelar(sel, cls) {
   }), { root: $('app'), threshold: .25 });
   document.querySelectorAll(sel).forEach(el => io.observe(el));
 }
-revelar('.ph', 'v'); revelar('.agenda', 'on'); revelar('.agenda li', 'on');
+revelar('.ph', 'v'); revelar('.agenda', 'on'); revelar('.agenda li', 'on'); revelar('.mapa', 'on');
+
+
+
 
 // Galería ampliada, con deslizamiento
 const fotos = [...document.querySelectorAll('.ph img')], lb = $('lb'), lbImg = $('lbImg');
