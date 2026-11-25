@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Generador de invitaciones · Posada 2026</title>
+<style>
+  :root { --fondo: #0b1f17; --tarjeta: #12301f; --linea: #2b4a3a; --verde: #1f9d55; --oro: #ffe27a; --rojo: #b3202f; --texto: #eef6f1; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 18px 16px 40px; background: var(--fondo); color: var(--texto); font: 17px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 520px; margin: 0 auto; }
+  h1 { margin: 0 0 4px; font-size: 1.35rem; }
+  h2 { margin: 22px 0 10px; font-size: 1.05rem; color: var(--oro); }
+  .sub { margin: 0 0 18px; color: #9fc7b0; font-size: .95rem; }
+  form, .link { padding: 16px; margin-bottom: 14px; background: var(--tarjeta); border: 1px solid var(--linea); border-radius: 16px; }
+  label { display: block; margin: 0 0 6px; font-weight: 600; }
+  input[type=text], input[type=number], input[type=tel] { width: 100%; padding: .65em .8em; font: inherit; color: inherit; background: var(--fondo); border: 1px solid #3a5a4a; border-radius: 10px; }
+  .campo { margin-bottom: 14px; }
+  .check { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; font-weight: 500; cursor: pointer; }
+  .check input { width: 22px; height: 22px; accent-color: var(--verde); }
+  .extra { margin: -2px 0 14px 32px; }
+  .extra[hidden] { display: none; }
+  button { font: inherit; font-weight: 600; padding: .7em 1.1em; border: 0; border-radius: 12px; color: #fff; background: var(--verde); cursor: pointer; }
+  .principal { width: 100%; font-size: 1.1rem; }
+  button.sec { background: #2b3f35; } button.mal { background: var(--rojo); } button.wa { background: #25a244; }
+  .datos { margin: 0 0 8px; }
+  .url { margin: 0 0 12px; color: #9fc7b0; font-size: .85rem; word-break: break-all; }
+  .acc { display: flex; flex-wrap: wrap; gap: 8px; }
+  .vacio, #aviso { color: #9fc7b0; }
+  #aviso { min-height: 1.4em; margin: 10px 0 0; color: var(--oro); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Generador de invitaciones</h1>
+  <p class="sub">Posada Skywatchers 2026 · Los links se guardan solo en este dispositivo.</p>
+
+  <form id="form">
+    <div class="campo">
+      <label for="nombre">Nombre del invitado</label>
+      <input id="nombre" type="text" autocomplete="off" required>
+    </div>
+    <div class="campo">
+      <label for="pases">Número de pases</label>
+      <input id="pases" type="number" min="1" value="1" required>
+    </div>
+    <label class="check"><input id="esDe" type="checkbox"> Es invitado de alguien más</label>
+    <div class="extra" id="boxPor" hidden>
+      <label for="por">Nombre de quien lo invita</label>
+      <input id="por" type="text" autocomplete="off">
+    </div>
+    <label class="check"><input id="conWa" type="checkbox"> Agregar número de WhatsApp</label>
+    <div class="extra" id="boxTel" hidden>
+      <label for="tel">Número de WhatsApp (10 dígitos)</label>
+      <input id="tel" type="tel" inputmode="tel" autocomplete="off">
+    </div>
+    <button class="principal" type="submit">Generar link</button>
+    <p id="aviso" role="status"></p>
+  </form>
+
+  <h2 id="titulo">Links generados</h2>
+  <div id="lista"></div>
+</main>
+
+<script>
+const BASE_URL = '';                              // EDITAR (opcional): p. ej. 'https://tu-dominio.com/'. Vacío = el sitio desde donde se abre el generador
+const FECHA = 'Sábado 12 de diciembre de 2026';   // EDITAR si cambia la fecha
+const KEY = 'posada26_links';
+
+const $ = id => document.getElementById(id);
+const el = (t, c, txt) => { const e = document.createElement(t); if (c) e.className = c; if (txt) e.textContent = txt; return e; };
+const base = () => (BASE_URL || location.origin + '/').replace(/\/?$/, '/');
+const leer = () => { try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch (e) { return []; } };
+const guardar = l => { try { localStorage.setItem(KEY, JSON.stringify(l)); } catch (e) {} };
+const limpio = s => (s || '').replace(/\|/g, ' ').replace(/\s+/g, ' ').trim();
+const soloTel = s => { const d = (s || '').replace(/\D/g, ''); return d.length === 10 ? '52' + d : d; };
+const verTel = s => { const d = (s || '').replace(/\D/g, '').slice(-10); return d.slice(0, 3) + ' ' + d.slice(3, 6) + ' ' + d.slice(6); };
+
+// Link: ?d=base64("nombre|pases|invitadoPor")
+function enlace(n, p, por) {
+  const bytes = new TextEncoder().encode([n, p, por].join('|'));
+  const b64 = btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  return base() + '?d=' + b64;
+}
+
+// Mensaje de WhatsApp (siempre el mismo)
+const mensaje = (n, url) => `🎄✨ ¡Hola, ${n}! 🌟
+
+¡La magia de la Navidad está por llegar y queremos celebrarla contigo!
+
+En Skywatchers Durango estamos preparando nuestra Posada Decembrina y nos encantaría que nos acompañaras a compartir una noche especial, llena de alegría, buenos momentos, amistad y mucha convivencia. 🌌
+
+Porque si algo hemos aprendido al mirar las estrellas, es que los mejores momentos también se disfrutan cuando los compartimos con grandes personas.
+
+¡Aparta esta ocasión para reunirnos, celebrar y crear nuevos recuerdos juntos!
+
+🎅⭐ *¡Te esperamos para vivir una posada fuera de este mundo!*
+
+📅 ${FECHA}
+
+👇 Consulta todos los detalles de nuestra celebración en la siguiente invitación:
+
+🔗 ${url}
+
+⚠️ Importante: para que tu confirmación de asistencia se envíe con éxito, copia este enlace y ábrelo directamente en tu navegador (Chrome o Safari). Si lo abres desde WhatsApp o Facebook, la confirmación podría no enviarse`;
+
+let tAviso;
+function aviso(t) { $('aviso').textContent = t; clearTimeout(tAviso); tAviso = setTimeout(() => { $('aviso').textContent = ''; }, 3500); }
+
+// Casillas que abren su espacio
+function revisar() {
+  $('boxPor').hidden = !$('esDe').checked;
+  $('boxTel').hidden = !$('conWa').checked;
+}
+$('esDe').onchange = () => { revisar(); if ($('esDe').checked) $('por').focus(); };
+$('conWa').onchange = () => { revisar(); if ($('conWa').checked) $('tel').focus(); };
+
+$('form').onsubmit = e => {
+  e.preventDefault();
+  const nombre = limpio($('nombre').value);
+  const pases = Math.max(1, parseInt($('pases').value, 10) || 1);
+  const por = $('esDe').checked ? limpio($('por').value) : '';
+  const tel = $('conWa').checked ? soloTel($('tel').value) : '';
+  if (!nombre) return aviso('Escribe el nombre del invitado.');
+  if ($('esDe').checked && !por) return aviso('Escribe el nombre de quien lo invita.');
+  if ($('conWa').checked && tel.length < 10) return aviso('Revisa el número de WhatsApp (10 dígitos).');
+  const l = leer();
+  l.unshift({ id: Date.now(), nombre, pases, por, tel, url: enlace(nombre, pases, por) });   // el más nuevo arriba
+  guardar(l);
+  $('form').reset(); $('pases').value = 1; revisar(); pintar();
+  aviso('Link generado.'); $('nombre').focus();
+};
+
+function pintar() {
+  const cont = $('lista'), l = leer();
+  cont.textContent = '';
+  $('titulo').textContent = 'Links generados' + (l.length ? ' (' + l.length + ')' : '');
+  if (!l.length) { cont.append(el('p', 'vacio', 'Aún no has generado links.')); return; }
+  l.forEach(x => {
+    const c = el('div', 'link');
+    const partes = [x.pases + (x.pases === 1 ? ' pase' : ' pases'), x.nombre];
+    if (x.por) partes.push('Invitado de ' + x.por);
+    if (x.tel) partes.push('WhatsApp ' + verTel(x.tel));
+    const datos = el('p', 'datos'); datos.textContent = partes.join(' · ');
+    const acc = el('div', 'acc');
+
+    const copiar = el('button', '', 'Copiar link'); copiar.type = 'button';
+    copiar.onclick = async () => {
+      try { await navigator.clipboard.writeText(x.url); copiar.textContent = '¡Copiado!'; setTimeout(() => { copiar.textContent = 'Copiar link'; }, 1500); }
+      catch (e) { aviso('No se pudo copiar. Mantén presionado el link para copiarlo.'); }
+    };
+    const borrar = el('button', 'mal', 'Borrar link'); borrar.type = 'button';
+    borrar.onclick = () => { if (confirm('¿Borrar el link de ' + x.nombre + '?')) { guardar(leer().filter(y => y.id !== x.id)); pintar(); } };
+    acc.append(copiar, borrar);
+
+    if (x.tel) {   // solo aparece si se agregó número
+      const wa = el('button', 'wa', 'Compartir por WhatsApp'); wa.type = 'button';
+      wa.onclick = () => window.open('https://wa.me/' + x.tel + '?text=' + encodeURIComponent(mensaje(x.nombre, x.url)), '_blank');
+      acc.append(wa);
+    }
+    c.append(datos, el('p', 'url', x.url), acc);
+    cont.append(c);
+  });
+}
+pintar();
+</script>
+</body>
+</html>

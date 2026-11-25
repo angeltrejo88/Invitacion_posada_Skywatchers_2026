@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Admin · Posada 2026</title>
+<style>
+  body { margin: 0; padding: 16px; font: 16px/1.4 system-ui, sans-serif; background: #0b1f17; color: #eef6f1; }
+  main { max-width: 520px; margin: 0 auto; }
+  h1 { font-size: 1.2rem; margin: 0 0 12px; }
+  input, button { font: inherit; padding: .55em .8em; border-radius: 10px; border: 1px solid #3a5a4a; background: #12301f; color: inherit; }
+  button { cursor: pointer; background: #1f9d55; border: 0; color: #fff; }
+  button.sec { background: #2b3f35; } button.mal { background: #b3202f; }
+  .tabs button.on { background: #d4a20c; color: #1a1400; }
+  #login, .tabs, .fila { display: grid; gap: 8px; }
+  .tabs { grid-template-columns: 1fr 1fr; margin: 12px 0; }
+  .fila { padding: 10px; margin-bottom: 8px; border: 1px solid #2b4a3a; border-radius: 12px; }
+  .fila.oculta { opacity: .5; }
+  .acc { display: flex; gap: 8px; flex-wrap: wrap; }
+  small { color: #9fc7b0; }
+  #msg { min-height: 1.4em; color: #ffe27a; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Panel · Posada Skywatchers 2026</h1>
+  <form id="login">
+    <input id="em" type="email" placeholder="Correo" autocomplete="username" required>
+    <input id="pw" type="password" placeholder="Contraseña" autocomplete="current-password" required>
+    <button>Entrar</button>
+  </form>
+  <p id="msg" role="status"></p>
+  <section id="panel" hidden>
+    <div class="tabs"><button type="button" id="tF" class="on">Frases</button><button type="button" id="tC" class="sec">Lista de la cena</button></div>
+   
+    <div id="lista"></div>
+  </section>
+</main>
+<script>
+const SB = { url: 'https://hlbmvwqomiqstvvwvyut.supabase.co', key: 'sb_publishable_z-Hjek32XKpXOK72jf6xcQ__ylQpZH4' };   // EDITAR: los mismos de la invitación
+let token = '', tab = 'frases';
+const $ = id => document.getElementById(id);
+const say = t => { $('msg').textContent = t; };
+
+async function api(method, path, body) {
+  const r = await fetch(SB.url + '/rest/v1/' + path, { method,
+    headers: { apikey: SB.key, Authorization: 'Bearer ' + token, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+    body: body ? JSON.stringify(body) : undefined });
+  if (!r.ok) throw new Error(r.status);
+  return method === 'GET' ? r.json() : null;
+}
+const btn = (t, c, fn) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = t; b.className = c;
+  b.onclick = () => fn().catch(() => say('No se pudo completar la acción.')); return b; };
+
+$('login').onsubmit = async e => {
+  e.preventDefault();
+  if (!SB.url || !SB.key) { say('Falta la URL o la key de Supabase en admin.html.'); return; }
+  try {
+    const r = await fetch(SB.url + '/auth/v1/token?grant_type=password', { method: 'POST',
+      headers: { apikey: SB.key, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: $('em').value, password: $('pw').value }) });
+    let j = {}; try { j = JSON.parse(await r.text()); } catch (_) {}
+    if (!r.ok) throw new Error(j.error_description || j.msg || 'respuesta ' + r.status);
+    token = j.access_token;
+    $('login').hidden = true; $('panel').hidden = false; pintar();
+  } catch (x) { say('No se pudo entrar: ' + x.message); }
+};
+$('tF').onclick = () => { tab = 'frases'; pintar(); };
+$('tC').onclick = () => { tab = 'cena'; pintar(); };
+
+async function pintar(msg) {
+  $('tF').className = tab === 'frases' ? 'on' : 'sec';
+  $('tC').className = tab === 'cena' ? 'on' : 'sec';
+  say(msg || '');
+  const box = $('lista'); box.textContent = '';
+  try { await (tab === 'frases' ? frases(box) : cena(box)); }
+  catch (e) { say('Error al cargar (' + e.message + '). Si pasó mucho tiempo, vuelve a entrar.'); }
+}
+
+
+async function frases(box) {
+  const rows = await api('GET', 'posada2026_frases?select=*&order=created_at.desc');
+  if (!rows.length) box.textContent = 'Aún no hay frases.';
+  rows.forEach(f => {
+    const d = document.createElement('div'); d.className = 'fila' + (f.oculta ? ' oculta' : '');
+    const t = document.createElement('div'); t.textContent = '“' + f.frase + '”';
+    const s = document.createElement('small');
+    s.textContent = f.nombre + (f.anonimo ? ' (anónima)' : '') + (f.oculta ? ' · oculta' : '');
+    const a = document.createElement('div'); a.className = 'acc';
+    a.append(
+      btn(f.oculta ? 'Mostrar' : 'Ocultar', 'sec', async () => { await api('PATCH', 'posada2026_frases?id=eq.' + f.id, { oculta: !f.oculta }); pintar(); }),
+      btn('Borrar', 'mal', async () => { if (confirm('¿Borrar esta frase?')) { await api('DELETE', 'posada2026_frases?id=eq.' + f.id); pintar(); } })
+    );
+    d.append(t, s, a); box.appendChild(d);
+  });
+}
+
+async function cena(box) {
+  const rows = await api('GET', 'posada2026_cena?select=*&order=orden.asc,id.asc');
+  box.appendChild(fila({ cosa: '', nombres: '' }, true));
+  rows.forEach(x => box.appendChild(fila(x, false)));
+}
+function fila(x, nueva) {
+  const d = document.createElement('div'); d.className = 'fila';
+  const c = document.createElement('input'); c.placeholder = 'Cosa (ej. Pozole)'; c.value = x.cosa;
+  const n = document.createElement('input'); n.placeholder = 'Quién la lleva (nombres separados por coma)'; n.value = x.nombres || '';
+  const a = document.createElement('div'); a.className = 'acc';
+  a.append(btn(nueva ? 'Agregar' : 'Guardar', '', async () => {
+    const cosa = c.value.trim(); if (!cosa) return;
+    const datos = { cosa, nombres: n.value.trim(), actualizado: new Date().toISOString() };
+    if (nueva) await api('POST', 'posada2026_cena', datos); else await api('PATCH', 'posada2026_cena?id=eq.' + x.id, datos);
+    pintar('Guardado.');
+  }));
+  if (!nueva) a.append(btn('Quitar', 'mal', async () => {
+    if (confirm('¿Quitar "' + x.cosa + '"?')) { await api('DELETE', 'posada2026_cena?id=eq.' + x.id); pintar(); }
+  }));
+  d.append(c, n, a); return d;
+}
+
+
+
+</script>
+</body>
+</html>
