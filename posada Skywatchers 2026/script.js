@@ -19,7 +19,7 @@ mapsUrl: 'https://maps.app.goo.gl/i6TdAYd61cC1XegdA'                            
 supabase: { url: 'https://hlbmvwqomiqstvvwvyut.supabase.co', key: 'sb_publishable_z-Hjek32XKpXOK72jf6xcQ__ylQpZH4', tabla: 'posada2026_frases' },   // EDITAR: URL y anon key
 frasesIniciales: [],                             // EDITAR: [{ t: 'frase', n: 'Nombre' }]
 
-form: { url: '', nombre: 'entry.0', tipo: 'entry.0', pases: 'entry.0', asiste: 'entry.0', cantidad: 'entry.0',
+form: { url: 'https://docs.google.com/forms/d/e/1FAIpQLSfAVisjqBOLH41i0ulcMbb7flO1fkXa0OhwEy_N_Na3d8G2Fg/formResponse', nombre: 'entry.883856468', tipo: 'entry.1260236058', pases: 'entry.1851905494', asiste: 'entry.2016426548', cantidad: 'entry.438899137',
         si: 'Sí, asistiré', no: 'No podré asistir' },   // EDITAR: URL …/formResponse y entry IDs
 
 };
@@ -181,7 +181,7 @@ if (preguntar) {
         body: JSON.stringify({ nombre: INVITADO.nombre, anonimo, frase: frase.slice(0, 100), link_id: LINK_ID || 'sin-link-' + Date.now() }) });
       if (!r.ok && r.status !== 409) throw new Error(r.status + ' ' + (await r.text()));
       try { localStorage.setItem('posada26_frase', '1'); } catch (e) {}
-      $('askMsg').textContent = 'Gracias por compartirlo. Tu frase ya viaja entre las estrellas del grupo.';
+      $('askMsg').textContent = 'Gracias por compartirlo. Tu frase ya viaja entre las estrellas del grupo. <br> Para poder visualizar tu mensaje actualiza esta invitacion.';
       setTimeout(cerrar, 1800);
     } catch (e) {
    console.error(e); $('askMsg').textContent = 'No se pudo enviar (' + e.message.slice(0, 140) + ')';
