@@ -126,6 +126,7 @@ body {
 .ridge { position: absolute; left: 0; bottom: 0; width: 100%; height: 120px; display: block; }
 
 .garland { position: absolute; top: 0; left: 0; width: 100%; height: 70px; }
+
 /* ===== SONIDO ===== */
 .sound {
   position: absolute; right: 14px; bottom: 14px; z-index: 10;
@@ -133,11 +134,20 @@ body {
   border: 1px solid rgba(236,240,241,.35); border-radius: 50%;
   background: rgba(6,9,20,.55); color: var(--nieve); backdrop-filter: blur(4px);
 }
+
 .sound[hidden] { display: none; }
-.sound svg { width: 20px; height: 20px; }
-.sound .slash { display: none; }
-.sound.muted .waves { display: none; }
-.sound.muted .slash { display: block; }
+/* Sonido: ecualizador y auto-ocultar */
+.sound { transition: opacity .5s, transform .5s; }
+.sound.oculto { opacity: 0; pointer-events: none; transform: translateX(14px); }
+.eq { display: flex; align-items: flex-end; gap: 3px; height: 18px; }
+.eq i { width: 3px; height: 100%; border-radius: 2px; background: currentColor; transform-origin: bottom; animation: eq 1s ease-in-out infinite; }
+.eq i:nth-child(2) { animation-delay: -.3s; }
+.eq i:nth-child(3) { animation-delay: -.6s; }
+.eq i:nth-child(4) { animation-delay: -.15s; }
+.sound.muted .eq i { animation: none; transform: scaleY(.25); }
+.sound.muted::after { content: ''; position: absolute; width: 26px; height: 2px; background: currentColor; rotate: -45deg; }
+@keyframes eq { 0%, 100% { transform: scaleY(.25); } 50% { transform: scaleY(1); } }
+
 
 /* ===== ANIMACIONES ===== */
 @keyframes signal { 0% { opacity: 0; } 25%, 70% { opacity: 1; } 100% { opacity: 0; } }
@@ -340,9 +350,50 @@ body {
 .voces-n { margin: 4px 0 0; font-size: .95rem; color: #ffe27a; }
 
 /* Cena: pizarrón */
-.pizarra { margin-top: 14px; padding: 18px; text-align: left; background: #1b2b24; border: 10px solid #8b5a2b; border-radius: 8px;
-  box-shadow: inset 0 0 30px rgba(0,0,0,.6), 0 8px 20px rgba(0,0,0,.4); }
-.pizarra .opt-h span { font: 400 1.7rem var(--display); }
+.pizarra { 
+  margin-top: 14px; 
+  padding: 18px; 
+  text-align: left; 
+  background: #1b2b24; 
+  border: 10px solid #8b5a2b; 
+  border-radius: 8px;
+  box-shadow: inset 0 0 30px rgba(0,0,0,.6), 0 8px 20px rgba(0,0,0,.4);
+  
+  /* 👇 Esto crea el espacio uniforme entre cada fila de comida */
+  display: flex;
+  flex-direction: column;
+  gap: 18px; 
+}
+
+.pizarra .opt {
+  display: flex;
+  flex-direction: column;
+  gap: 6px; /* Espacio entre el texto y la barra de progreso */
+}
+
+.pizarra .opt-h {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px; /* Evita que el nombre choque con la comida si el texto es largo */
+}
+
+.pizarra .opt-h span { 
+  font: 400 1.7rem var(--display); 
+}
+
+.pizarra .opt-h small {
+  text-align: right;
+  font-size: 0.95rem;
+  opacity: 0.9;
+}
+
+/* Estilo sutil cuando dice "Aún falta" */
+.pizarra .opt.falta .opt-h small {
+  opacity: 0.55;
+  font-style: italic;
+}
+
 
 /* Confirmación: boleto */
 .ticket { position: relative; padding: 26px 22px; color: #fff; border-radius: 16px; background: linear-gradient(160deg, #c62a3b, #8f1a2a);
@@ -392,6 +443,6 @@ body {
 .cierre.on .cima { transform-box: fill-box; transform-origin: center; animation: pulso 2.4s 3s ease-in-out infinite; }
 @keyframes pulso { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
 
-.tabs { grid-template-columns: repeat(3, 1fr); }
+.tabs { grid-template-columns: 1fr 1fr; }
 textarea, .fila input { width: 100%; box-sizing: border-box; font: inherit; padding: .55em .8em; border-radius: 10px; border: 1px solid #3a5a4a; background: #12301f; color: inherit; }
 .fila small { word-break: break-all; }

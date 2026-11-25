@@ -17,7 +17,7 @@ mapsUrl: 'https://maps.app.goo.gl/i6TdAYd61cC1XegdA'                            
 
 // al mismo nivel que evento:
 supabase: { url: 'https://hlbmvwqomiqstvvwvyut.supabase.co', key: 'sb_publishable_z-Hjek32XKpXOK72jf6xcQ__ylQpZH4', tabla: 'posada2026_frases' },   // EDITAR: URL y anon key
-frasesIniciales: [{ t: 'Las mejores vivencias', n: 'Angel Trejo' },{ t: 'Las mejores fotos', n: 'Angel Trejo' }],                             // EDITAR: [{ t: 'frase', n: 'Nombre' }]
+frasesIniciales: [],                             // EDITAR: [{ t: 'frase', n: 'Nombre' }]
 
 form: { url: '', nombre: 'entry.0', tipo: 'entry.0', pases: 'entry.0', asiste: 'entry.0', cantidad: 'entry.0',
         si: 'Sí, asistiré', no: 'No podré asistir' },   // EDITAR: URL …/formResponse y entry IDs
@@ -95,16 +95,30 @@ function iniciarAudio() {
   if (!CONFIG.audio) return;
   audio.src = CONFIG.audio;
   audio.volume = CONFIG.volumen;
-  audio.play().then(() => {
+ audio.play().then(() => {
+  setTimeout(() => {
     btnSonido.hidden = false;
     btnSonido.classList.remove('muted');
-  }).catch(() => {});
+    mostrarSonido();
+  }, 1200);
+}).catch(() => {});
 }
 audio.addEventListener('error', () => { btnSonido.hidden = true; });
 btnSonido.addEventListener('click', () => {
   if (audio.paused) { audio.play(); btnSonido.classList.remove('muted'); }
   else { audio.pause(); btnSonido.classList.add('muted'); }
+
 });
+
+// El botón se oculta solo y reaparece al tocar o deslizar
+let tOculto;
+const mostrarSonido = () => {
+  btnSonido.classList.remove('oculto');
+  clearTimeout(tOculto);
+  tOculto = setTimeout(() => btnSonido.classList.add('oculto'), 3000);
+};
+['pointerdown', 'touchstart', 'scroll'].forEach(ev =>
+  $('phone').addEventListener(ev, mostrarSonido, { capture: true, passive: true }));
 
 let reanudar = false;
 document.addEventListener('visibilitychange', () => {
@@ -176,7 +190,7 @@ if (preguntar) {
 } else { ask.remove(); }
 
 
-// Frases del grupo: tarjetas en carrusel
+
 // Frases del grupo: tarjetas en carrusel
 (async function frases() {
   const lista = [];
@@ -396,18 +410,45 @@ $('arriba').onclick = () => $('app').scrollTo({ top: 0, behavior: 'smooth' });
     if (!r.ok) return;
     const filas = await r.json();
     if (!filas.length) return;
-    const lista = filas.map(x => ({ cosa: x.cosa, n: (x.nombres || '').split(',').map(s => s.trim()).filter(Boolean) }));
+    const lista = filas.map(x => ({ cosa: x.cosa, n: (x.nombres || '').split(',').map(s => s.trim()).filter(Boolean)}  ));
+    
     const max = Math.max(1, ...lista.map(x => x.n.length)), box = $('poll');
-    lista.forEach(x => {
-      const row = document.createElement('div'); row.className = 'opt' + (x.n.length ? '' : ' falta');
-      const h = document.createElement('div'); h.className = 'opt-h';
-      const a = document.createElement('span'); a.textContent = x.cosa;
-      const b = document.createElement('b'); b.textContent = x.n.length || 'Aún falta';
-      h.append(a, b);
-      const bar = document.createElement('i'); bar.style.setProperty('--w', x.n.length / max * 100 + '%');
-      const nm = document.createElement('small'); nm.textContent = x.n.join(', ');
-      row.append(h, bar, nm); box.appendChild(row);
-    });
+   
+lista.forEach(x => {
+  const row = document.createElement('div');
+  row.className = 'opt' + (x.n.length ? '' : ' falta');
+  // Separación visual entre cada tarjeta
+  row.style.marginBottom = '14px'; 
+
+  const h = document.createElement('div');
+  h.className = 'opt-h';
+  h.style.display = 'flex';
+  h.style.justifyContent = 'space-between';
+  h.style.alignItems = 'baseline';
+  h.style.gap = '12px';
+
+  // Izquierda: Qué cosa es
+  const a = document.createElement('span');
+  a.textContent = x.cosa;
+  a.style.fontWeight = '600';
+
+  // Derecha: Quiénes lo llevan (en lugar de solo el número)
+  const b = document.createElement('small');
+  b.textContent = x.n.length ? x.n.join(', ') : 'Aún falta';
+  b.style.textAlign = 'right';
+  b.style.opacity = x.n.length ? '0.9' : '0.6';
+
+  h.append(a, b);
+
+  // Barra de progreso
+  const bar = document.createElement('i');
+  bar.style.setProperty('--w', (x.n.length / max) * 100 + '%');
+
+  row.append(h, bar);
+  box.appendChild(row);
+});
+
+
     box.hidden = false;
     if (!INVITADO.especial) $('pollNota').hidden = false;
     const ult = new Date(Math.max(...filas.map(x => new Date(x.actualizado))));
